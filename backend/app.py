@@ -42,7 +42,7 @@ logger = logger_config.setup_logging()
 app_config = config.get_config()
 
 app = Flask(__name__)
-FRONTEND_DIR = os.path.dirname(os.path.abspath(__file__))
+FRONTEND_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'frontend')
 app.secret_key = app_config.SECRET_KEY
 
 # Session configuration for production
@@ -185,12 +185,12 @@ def serve_frontend(filename: str):
 
 @app.route('/', methods=['GET'])
 def frontend_root():
-    return serve_frontend('main.html')
+    return serve_frontend('index.html')
 
 
 @app.route('/index.html', methods=['GET'])
 def frontend_index():
-    return serve_frontend('main.html')
+    return serve_frontend('index.html')
 
 
 @app.route('/dashboard.html', methods=['GET'])
@@ -697,7 +697,7 @@ def health():
 @app.route('/')
 def index():
     """Serve the landing/login page."""
-    return send_from_directory(FRONTEND_DIR, 'main.html')
+    return send_from_directory(FRONTEND_DIR, 'index.html')
 
 @app.route('/dashboard.html')
 def dashboard_page():
