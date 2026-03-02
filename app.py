@@ -1,23 +1,10 @@
 """
 app.py — StockForge Flask REST API
 ====================================
-Endpoints:
-  POST /signup
-  POST /login
-  POST /logout
-  GET  /me
-  POST /upload
-  POST /fetch-stock
-  POST /clean-data
-  POST /detect-outliers
-  POST /remove-outliers
-  POST /normalize
-  POST /predict
-  POST /compare-stocks
-  GET  /download/<type>
-  GET  /get-dashboard-data
-  GET  /history
 """
+import eventlet
+eventlet.monkey_patch()
+
 import os
 import io
 import json
