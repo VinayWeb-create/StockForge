@@ -4,8 +4,8 @@ pymongo==4.7.3
 werkzeug==3.0.3
 pandas>=2.3.0
 numpy>=2.0.0
-scikit-learn==1.5.0
-scipy==1.13.1
+scikit-learn>=1.6.0
+scipy>=1.14.0
 yfinance==0.2.40
 flask-socketio==5.3.6
 flask-limiter==3.7.0
