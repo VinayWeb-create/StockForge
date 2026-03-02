@@ -3,7 +3,7 @@ services:
     name: stockforge-api
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: cd backend && gunicorn --worker-class eventlet -w 1 --bind 0.0.0.0:$PORT app:app
+    startCommand: cd backend && gunicorn -w 1 --bind 0.0.0.0:$PORT app:app
     envVars:
       - key: FLASK_ENV
         value: production

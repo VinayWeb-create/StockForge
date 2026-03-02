@@ -2,8 +2,6 @@
 app.py — StockForge Flask REST API
 ====================================
 """
-import eventlet
-eventlet.monkey_patch()
 
 import os
 import io
