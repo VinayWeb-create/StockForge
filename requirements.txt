@@ -11,8 +11,8 @@ flask-socketio==5.3.6
 flask-limiter==3.7.0
 redis==5.0.4
 celery==5.4.0
-statsmodels==0.14.2
+statsmodels>=0.15.0
 python-dotenv==1.0.1
 async-timeout>=4.0.2
-eventlet==0.35.2
+eventlet>=0.36.0
 gunicorn==22.0.0
