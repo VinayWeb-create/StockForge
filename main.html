@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockForge — AI-Powered Stock Analysis</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <style>
+    /* ── AUTH PAGE SPECIFIC ── */
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+
+    .auth-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      background: var(--bg);
+    }
+
+    .auth-bg .grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--grid-line) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.4;
+    }
+
+    .auth-bg .glow {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      opacity: 0.18;
+    }
+
+    .glow-1 {
+      width: 600px;
+      height: 600px;
+      background: var(--accent);
+      top: -150px;
+      left: -100px;
+    }
+
+    .glow-2 {
+      width: 500px;
+      height: 500px;
+      background: var(--accent2);
+      bottom: -100px;
+      right: -80px;
+    }
+
+    .auth-card {
+      position: relative;
+      z-index: 1;
+      width: 440px;
+      max-width: 96vw;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 48px 40px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.4);
+    }
+
+    .auth-logo {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 32px;
+    }
+
+    .auth-logo .icon {
+      width: 40px;
+      height: 40px;
+      background: var(--accent);
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+    }
+
+    .auth-logo span {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 22px;
+      color: var(--text);
+    }
+
+    .auth-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 28px;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .auth-sub {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 32px;
+    }
+
+    .tab-row {
+      display: flex;
+      gap: 4px;
+      background: var(--bg);
+      border-radius: 10px;
+      padding: 4px;
+      margin-bottom: 28px;
+    }
+
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      border-radius: 8px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: all .2s;
+      background: transparent;
+      color: var(--muted);
+    }
+
+    .tab-btn.active {
+      background: var(--accent);
+      color: #000;
+    }
+
+    .form-group {
+      margin-bottom: 18px;
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--muted);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .form-group input {
+      width: 100%;
+      box-sizing: border-box;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 13px 16px;
+      font-family: 'Space Mono', monospace;
+      font-size: 14px;
+      color: var(--text);
+      outline: none;
+      transition: border-color .2s;
+    }
+
+    .form-group input:focus {
+      border-color: var(--accent);
+    }
+
+    .btn-primary {
+      width: 100%;
+      padding: 15px;
+      background: var(--accent);
+      border: none;
+      border-radius: 10px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      color: #000;
+      cursor: pointer;
+      transition: opacity .2s, transform .1s;
+      margin-top: 8px;
+    }
+
+    .btn-primary:hover {
+      opacity: 0.9;
+      transform: translateY(-1px);
+    }
+
+    .btn-primary:active {
+      transform: translateY(0);
+    }
+
+    .btn-primary:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .form-panel {
+      display: none;
+    }
+
+    .form-panel.active {
+      display: block;
+    }
+
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      font-size: 13px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .alert.success {
+      background: rgba(0, 255, 136, 0.1);
+      border: 1px solid var(--success);
+      color: var(--success);
+    }
+
+    .alert.error {
+      background: rgba(255, 77, 77, 0.1);
+      border: 1px solid var(--danger);
+      color: var(--danger);
+    }
+
+    .alert.show {
+      display: block;
+    }
+
+    .ticker-strip {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      z-index: 10;
+      background: var(--card);
+      border-top: 1px solid var(--border);
+      padding: 8px 0;
+      overflow: hidden;
+    }
+
+    .ticker-inner {
+      display: flex;
+      gap: 40px;
+      animation: ticker 30s linear infinite;
+      white-space: nowrap;
+    }
+
+    @keyframes ticker {
+      from {
+        transform: translateX(0);
+      }
+
+      to {
+        transform: translateX(-50%);
+      }
+    }
+
+    .ticker-item {
+      font-family: 'Space Mono', monospace;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .ticker-item .up {
+      color: var(--success);
+    }
+
+    .ticker-item .down {
+      color: var(--danger);
+    }
+  </style>
+</head>
+
+<body>
+  <div class="auth-bg">
+    <div class="grid"></div>
+    <div class="glow glow-1"></div>
+    <div class="glow glow-2"></div>
+  </div>
+
+  <div class="auth-card">
+    <div class="auth-logo">
+      <div class="icon">📈</div>
+      <span>StockForge</span>
+    </div>
+
+    <h1 class="auth-title">Welcome back</h1>
+    <p class="auth-sub">AI-powered stock data wrangling & analysis</p>
+
+    <div class="tab-row">
+      <button class="tab-btn active" onclick="switchTab('login')">Login</button>
+      <button class="tab-btn" onclick="switchTab('signup')">Sign Up</button>
+    </div>
+
+    <div id="alert-box" class="alert"></div>
+
+    <!-- LOGIN FORM -->
+    <div id="login-panel" class="form-panel active">
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="login-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="login-password" placeholder="••••••••" />
+      </div>
+      <button class="btn-primary" id="login-btn" onclick="handleLogin()">Login →</button>
+    </div>
+
+    <!-- SIGNUP FORM -->
+    <div id="signup-panel" class="form-panel">
+      <div class="form-group">
+        <label>Full Name</label>
+        <input type="text" id="signup-name" placeholder="John Doe" />
+      </div>
+      <div class="form-group">
+        <label>Email</label>
+        <input type="email" id="signup-email" placeholder="you@example.com" />
+      </div>
+      <div class="form-group">
+        <label>Password</label>
+        <input type="password" id="signup-password" placeholder="Min. 6 characters" />
+      </div>
+      <button class="btn-primary" id="signup-btn" onclick="handleSignup()">Create Account →</button>
+    </div>
+  </div>
+
+  <!-- Ticker strip -->
+  <div class="ticker-strip">
+    <div class="ticker-inner" id="ticker">
+      <span class="ticker-item">AAPL <span class="up">▲ +1.24%</span></span>
+      <span class="ticker-item">TSLA <span class="down">▼ -0.87%</span></span>
+      <span class="ticker-item">GOOGL <span class="up">▲ +2.01%</span></span>
+      <span class="ticker-item">MSFT <span class="up">▲ +0.55%</span></span>
+      <span class="ticker-item">AMZN <span class="down">▼ -1.12%</span></span>
+      <span class="ticker-item">NVDA <span class="up">▲ +3.45%</span></span>
+      <span class="ticker-item">META <span class="up">▲ +1.89%</span></span>
+      <span class="ticker-item">NFLX <span class="down">▼ -0.34%</span></span>
+      <!-- duplicate for seamless loop -->
+      <span class="ticker-item">AAPL <span class="up">▲ +1.24%</span></span>
+      <span class="ticker-item">TSLA <span class="down">▼ -0.87%</span></span>
+      <span class="ticker-item">GOOGL <span class="up">▲ +2.01%</span></span>
+      <span class="ticker-item">MSFT <span class="up">▲ +0.55%</span></span>
+      <span class="ticker-item">AMZN <span class="down">▼ -1.12%</span></span>
+      <span class="ticker-item">NVDA <span class="up">▲ +3.45%</span></span>
+      <span class="ticker-item">META <span class="up">▲ +1.89%</span></span>
+      <span class="ticker-item">NFLX <span class="down">▼ -0.34%</span></span>
+    </div>
+  </div>
+
+  <script>
+    const API = 'http://localhost:5000';
+
+    function switchTab(tab) {
+      document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup')));
+      document.getElementById('login-panel').classList.toggle('active', tab === 'login');
+      document.getElementById('signup-panel').classList.toggle('active', tab === 'signup');
+      hideAlert();
+    }
+
+    function showAlert(msg, type) {
+      const el = document.getElementById('alert-box');
+      el.textContent = msg;
+      el.className = `alert ${type} show`;
+    }
+    function hideAlert() {
+      document.getElementById('alert-box').className = 'alert';
+    }
+
+    async function handleLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      if (!email || !password) return showAlert('Please fill all fields', 'error');
+      const btn = document.getElementById('login-btn');
+      btn.disabled = true; btn.textContent = 'Logging in...';
+      try {
+        const res = await fetch(`${API}/login`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          localStorage.setItem('sf_user', JSON.stringify(data.user));
+          showAlert('Login successful! Redirecting...', 'success');
+          setTimeout(() => window.location.href = 'dashboard.html', 800);
+        } else {
+          showAlert(data.error || 'Login failed', 'error');
+        }
+      } catch (e) {
+        showAlert('Cannot connect to server. Make sure backend is running.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Login →';
+    }
+
+    async function handleSignup() {
+      const name = document.getElementById('signup-name').value.trim();
+      const email = document.getElementById('signup-email').value.trim();
+      const password = document.getElementById('signup-password').value;
+      if (!name || !email || !password) return showAlert('Please fill all fields', 'error');
+      if (password.length < 6) return showAlert('Password must be at least 6 characters', 'error');
+      const btn = document.getElementById('signup-btn');
+      btn.disabled = true; btn.textContent = 'Creating account...';
+      try {
+        const res = await fetch(`${API}/signup`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ name, email, password }),
+          credentials: 'include'
+        });
+        const data = await res.json();
+        if (res.ok) {
+          showAlert('Account created! Logging you in...', 'success');
+          setTimeout(() => window.location.href = 'dashboard.html', 900);
+        } else {
+          showAlert(data.error || 'Signup failed', 'error');
+        }
+      } catch (e) {
+        showAlert('Cannot connect to server. Make sure backend is running.', 'error');
+      }
+      btn.disabled = false; btn.textContent = 'Create Account →';
+    }
+
+    // Enter key support
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Enter') {
+        if (document.getElementById('login-panel').classList.contains('active')) handleLogin();
+        else handleSignup();
+      }
+    });
+
+    // Check if already logged in
+    if (localStorage.getItem('sf_user')) window.location.href = 'dashboard.html';
+  </script>
+</body>
+
+</html>

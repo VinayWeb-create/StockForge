@@ -1,0 +1,972 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StockForge — Dashboard</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap"
+    rel="stylesheet" />
+  <link rel="stylesheet" href="style.css" />
+  <script src="chart.umd.min.js"></script>
+  <script src="socket.io.min.js"></script>
+  <style>
+    /* ── LAYOUT ── */
+    body {
+      display: flex;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* ── SIDEBAR ── */
+    .sidebar {
+      width: 240px;
+      min-height: 100vh;
+      background: var(--card);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      position: fixed;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      z-index: 100;
+      overflow-y: auto;
+      overflow-x: hidden;
+    }
+
+    .sidebar-logo {
+      padding: 24px 20px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .sidebar-logo .icon {
+      width: 34px;
+      height: 34px;
+      background: var(--accent);
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+    }
+
+    .sidebar-logo span {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 18px;
+    }
+
+    .nav-section {
+      padding: 16px 12px 8px;
+      font-size: 10px;
+      color: var(--muted);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 11px 16px;
+      border-radius: 9px;
+      margin: 2px 8px;
+      cursor: pointer;
+      transition: all .15s;
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    .nav-item:hover {
+      background: var(--card2);
+      color: var(--text);
+    }
+
+    .nav-item.active {
+      background: rgba(0, 229, 255, 0.1);
+      color: var(--accent);
+      border: 1px solid rgba(0, 229, 255, 0.2);
+    }
+
+    .nav-item .nav-icon {
+      font-size: 16px;
+      width: 20px;
+      text-align: center;
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 9px;
+      background: var(--card2);
+    }
+
+    .user-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: var(--accent2);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 13px;
+      color: #fff;
+    }
+
+    .user-info .name {
+      font-size: 13px;
+      font-weight: 600;
+    }
+
+    .user-info .role {
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    /* ── MAIN CONTENT ── */
+    .main {
+      margin-left: 240px;
+      flex: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--card);
+      border-bottom: 1px solid var(--border);
+      padding: 0 28px;
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 50;
+    }
+
+    .topbar-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .topbar-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+    }
+
+    .topbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .theme-toggle {
+      width: 38px;
+      height: 38px;
+      border-radius: 9px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all .2s;
+    }
+
+    .theme-toggle:hover {
+      border-color: var(--accent);
+    }
+
+    /* ── CONTENT AREA ── */
+    .content {
+      padding: 28px;
+      flex: 1;
+    }
+
+    /* ── PAGES ── */
+    .page {
+      display: none;
+    }
+
+    .page.active {
+      display: block;
+    }
+
+    /* ── OVERVIEW STATS GRID ── */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 1100px) {
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ── CHARTS GRID ── */
+    .charts-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    .charts-grid-3 {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+      margin-bottom: 28px;
+    }
+
+    @media (max-width: 1000px) {
+
+      .charts-grid,
+      .charts-grid-3 {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .chart-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 22px;
+    }
+
+    .chart-title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 15px;
+      margin-bottom: 4px;
+    }
+
+    .chart-sub {
+      font-size: 11px;
+      color: var(--muted);
+      margin-bottom: 16px;
+    }
+
+    .chart-canvas-wrap {
+      position: relative;
+      height: 220px;
+    }
+
+    /* ── UPLOAD AREA ── */
+    .upload-zone {
+      border: 2px dashed var(--border);
+      border-radius: 14px;
+      padding: 48px;
+      text-align: center;
+      cursor: pointer;
+      transition: all .2s;
+    }
+
+    .upload-zone:hover,
+    .upload-zone.drag-over {
+      border-color: var(--accent);
+      background: rgba(0, 229, 255, 0.04);
+    }
+
+    .upload-zone .icon {
+      font-size: 40px;
+      margin-bottom: 12px;
+    }
+
+    .upload-zone .title {
+      font-family: 'Syne', sans-serif;
+      font-weight: 700;
+      font-size: 17px;
+      margin-bottom: 6px;
+    }
+
+    .upload-zone .sub {
+      color: var(--muted);
+      font-size: 13px;
+    }
+
+    /* ── ACTION BAR ── */
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 16px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+
+    /* ── OUTLIER METHOD SELECT ── */
+    .method-tabs {
+      display: flex;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+
+    .method-tab {
+      padding: 7px 14px;
+      border-radius: 7px;
+      background: var(--card2);
+      border: 1px solid var(--border);
+      cursor: pointer;
+      font-size: 12px;
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      color: var(--muted);
+      transition: all .15s;
+    }
+
+    .method-tab.active {
+      background: rgba(124, 92, 252, 0.2);
+      border-color: var(--accent2);
+      color: var(--accent2);
+    }
+
+    /* ── TWO-PANEL TABLE DIFF ── */
+    .diff-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .diff-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .diff-panel .panel-label {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 10px;
+      color: var(--muted);
+    }
+
+    .diff-panel .panel-label span {
+      padding: 3px 8px;
+      border-radius: 5px;
+      font-size: 10px;
+      margin-left: 8px;
+    }
+
+    /* ── COMPARE STOCK GRID ── */
+    .compare-inputs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 16px;
+    }
+
+    .compare-inputs input {
+      flex: 1;
+      min-width: 140px;
+    }
+
+    /* ── PREDICTION GRAPH ── */
+    .prediction-legend {
+      display: flex;
+      gap: 20px;
+      margin-bottom: 12px;
+      font-size: 12px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+
+    /* ── HISTORY TABLE ── */
+    .history-row {
+      cursor: pointer;
+    }
+
+    .history-row:hover td {
+      background: var(--card2);
+    }
+
+    /* ── EMPTY STATE ── */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--muted);
+    }
+
+    .empty-state .icon {
+      font-size: 48px;
+      margin-bottom: 12px;
+    }
+
+    .empty-state p {
+      font-size: 15px;
+    }
+
+    /* ── MOBILE HAMBURGER ── */
+    .hamburger {
+      display: none;
+      cursor: pointer;
+      font-size: 22px;
+      background: none;
+      border: none;
+      color: var(--text);
+    }
+
+    @media (max-width: 768px) {
+      .sidebar {
+        transform: translateX(-100%);
+      }
+
+      .sidebar.open {
+        transform: translateX(0);
+      }
+
+      .main {
+        margin-left: 0;
+      }
+
+      .hamburger {
+        display: block;
+      }
+
+      .stats-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="icon">📈</div>
+      <span>StockForge</span>
+    </div>
+
+    <div class="nav-section">Main</div>
+    <div class="nav-item active" onclick="showPage('overview')">
+      <span class="nav-icon">📊</span> Overview
+    </div>
+
+    <div class="nav-section">Data</div>
+    <div class="nav-item" onclick="showPage('upload')">
+      <span class="nav-icon">📁</span> Upload Dataset
+    </div>
+    <div class="nav-item" onclick="showPage('fetch')">
+      <span class="nav-icon">🌐</span> Fetch Live Stock
+    </div>
+    <div class="nav-item" onclick="showPage('history')">
+      <span class="nav-icon">🕒</span> History
+    </div>
+
+    <div class="nav-section">Processing</div>
+    <div class="nav-item" onclick="showPage('clean')">
+      <span class="nav-icon">🧹</span> Clean Data
+    </div>
+    <div class="nav-item" onclick="showPage('outliers')">
+      <span class="nav-icon">🔍</span> Outlier Detection
+    </div>
+    <div class="nav-item" onclick="showPage('normalize')">
+      <span class="nav-icon">⚖️</span> Normalize
+    </div>
+
+    <div class="nav-section">Analytics</div>
+    <div class="nav-item" onclick="showPage('charts')">
+      <span class="nav-icon">📉</span> Charts
+    </div>
+    <div class="nav-item" onclick="showPage('predict')">
+      <span class="nav-icon">🤖</span> AI Prediction <span class="info-icon" data-edu="prediction">?</span>
+    </div>
+    <div class="nav-item" onclick="showPage('compare')">
+      <span class="nav-icon">🔄</span> Multi-Stock Compare
+    </div>
+
+    <div class="nav-section">Help & Learning</div>
+    <div class="nav-item" onclick="openHelpModal()">
+      <span class="nav-icon">📖</span> Learning Center
+    </div>
+
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">U</div>
+        <div class="user-info">
+          <div class="name" id="user-name">User</div>
+          <div class="role">Analyst</div>
+        </div>
+      </div>
+      <button class="btn btn-outline btn-sm w-full mt-2" onclick="logout()">Logout</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <div class="topbar-left">
+        <button class="hamburger" onclick="toggleSidebar()">☰</button>
+        <div class="topbar-title" id="page-title">Overview</div>
+      </div>
+      <div class="topbar-right">
+        <span class="badge badge-success" id="data-status">● Offline</span>
+        <div class="theme-toggle" onclick="toggleTheme()" title="Toggle theme">🌙</div>
+      </div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="content">
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║       OVERVIEW PAGE       ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page active" id="page-overview">
+        <h1 class="section-title">Dashboard Overview</h1>
+        <p class="section-sub">Your stock analysis workspace at a glance</p>
+
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="val text-accent" id="ov-rows">—</div>
+            <div class="lbl">Total Rows</div>
+          </div>
+          <div class="stat-box">
+            <div class="val text-success" id="ov-high">—</div>
+            <div class="lbl">Highest Close</div>
+          </div>
+          <div class="stat-box">
+            <div class="val text-danger" id="ov-low">—</div>
+            <div class="lbl">Lowest Close</div>
+          </div>
+          <div class="stat-box">
+            <div class="val" id="ov-avg">—</div>
+            <div class="lbl">Average Close</div>
+          </div>
+        </div>
+
+        <div class="charts-grid">
+          <div class="chart-card">
+            <div class="chart-title">Closing Price</div>
+            <div class="chart-sub">Historical close price trend</div>
+            <div class="chart-canvas-wrap"><canvas id="chart-close"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Volume Distribution</div>
+            <div class="chart-sub">Trading volume over time</div>
+            <div class="chart-canvas-wrap"><canvas id="chart-volume"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-card">
+          <div class="chart-title">Moving Averages — MA7 / MA20 / MA50 <span class="info-icon" data-edu="ma">?</span>
+          </div>
+          <div class="chart-sub">Trend smoothing overlays</div>
+          <div class="chart-canvas-wrap" style="height:260px"><canvas id="chart-ma"></canvas></div>
+        </div>
+
+        <div id="ov-empty" class="empty-state mt-3">
+          <div class="icon">📭</div>
+          <p>No data loaded yet. <a onclick="showPage('upload')">Upload a dataset</a> or <a
+              onclick="showPage('fetch')">fetch live stock data</a> to begin.</p>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║       UPLOAD PAGE         ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-upload">
+        <h1 class="section-title">Upload Dataset</h1>
+        <p class="section-sub">Upload a CSV file with columns: Date, Open, High, Low, Close, Volume</p>
+
+        <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()"
+          ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+          <div class="icon">📂</div>
+          <div class="title">Drop CSV file here</div>
+          <div class="sub">or click to browse — max 10MB</div>
+          <input type="file" id="file-input" accept=".csv" style="display:none" onchange="handleFileSelect(event)" />
+        </div>
+
+        <div id="upload-preview" class="hidden mt-3">
+          <div class="flex justify-between items-center mb-2">
+            <div>
+              <span class="badge badge-accent" id="upload-filename">file.csv</span>
+              <span class="badge badge-success ml-1" id="upload-rows">0 rows</span>
+            </div>
+            <button class="btn btn-danger btn-sm" onclick="clearUpload()">✕ Clear</button>
+          </div>
+          <div class="data-table-wrap" id="upload-table-wrap"></div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║    FETCH LIVE STOCK       ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-fetch">
+        <h1 class="section-title">Fetch Live Stock Data</h1>
+        <p class="section-sub">Pull real-time data from Yahoo Finance via yfinance</p>
+
+        <div class="card mb-3">
+          <div class="card-title">Stock Parameters</div>
+          <div class="card-sub">Enter symbol, date range and interval</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+            <div>
+              <label class="form-label">Symbol</label>
+              <input class="form-control" id="fetch-symbol" placeholder="AAPL, TSLA, TCS.NS" value="AAPL" />
+            </div>
+            <div>
+              <label class="form-label">Period</label>
+              <select class="form-control" id="fetch-period">
+                <option value="1mo">1 Month</option>
+                <option value="3mo" selected>3 Months</option>
+                <option value="6mo">6 Months</option>
+                <option value="1y">1 Year</option>
+                <option value="2y">2 Years</option>
+                <option value="5y">5 Years</option>
+              </select>
+            </div>
+            <div>
+              <label class="form-label">Interval</label>
+              <select class="form-control" id="fetch-interval">
+                <option value="1d" selected>Daily</option>
+                <option value="1wk">Weekly</option>
+                <option value="1mo">Monthly</option>
+              </select>
+            </div>
+            <div style="display:flex;align-items:flex-end">
+              <button class="btn btn-accent w-full" onclick="fetchStock()">
+                🌐 Fetch Data
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div id="fetch-result" class="hidden">
+          <div class="flex justify-between items-center mb-2">
+            <div>
+              <span class="badge badge-accent" id="fetch-symbol-badge">AAPL</span>
+              <span class="badge badge-success ml-1" id="fetch-rows-badge">0 rows</span>
+            </div>
+            <button class="btn btn-outline btn-sm" onclick="downloadData('raw')">⬇ Download CSV</button>
+          </div>
+          <div class="data-table-wrap" id="fetch-table-wrap"></div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║       CLEAN DATA          ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-clean">
+        <h1 class="section-title">Data Cleaning</h1>
+        <p class="section-sub">Remove nulls, duplicates, fix dates and sort by date</p>
+
+        <div class="action-bar">
+          <button class="btn btn-accent" onclick="cleanData()">🧹 Run Data Cleaning</button>
+          <button class="btn btn-outline btn-sm" onclick="downloadData('cleaned')">⬇ Download Cleaned CSV</button>
+        </div>
+
+        <div id="clean-results" class="hidden">
+          <div class="stats-grid" style="grid-template-columns:repeat(4,1fr);margin-bottom:20px">
+            <div class="stat-box">
+              <div class="val text-danger" id="clean-removed">—</div>
+              <div class="lbl">Rows Removed</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-accent" id="clean-remaining">—</div>
+              <div class="lbl">Rows Remaining</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-warn" id="clean-nulls">—</div>
+              <div class="lbl">Nulls Dropped</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-success" id="clean-dupes">—</div>
+              <div class="lbl">Duplicates Removed</div>
+            </div>
+          </div>
+          <div class="diff-grid">
+            <div class="diff-panel">
+              <div class="panel-label">Before <span class="badge badge-danger">Raw</span></div>
+              <div class="data-table-wrap" id="before-table"></div>
+            </div>
+            <div class="diff-panel">
+              <div class="panel-label">After <span class="badge badge-success">Cleaned</span></div>
+              <div class="data-table-wrap" id="after-table"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="clean-empty" class="empty-state">
+          <div class="icon">🧹</div>
+          <p>Load data first via Upload or Fetch, then run cleaning.</p>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║    OUTLIER DETECTION      ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-outliers">
+        <h1 class="section-title">Outlier Detection <span class="info-icon" data-edu="outliers">?</span></h1>
+        <p class="section-sub">Detect anomalous data points using statistical and ML methods</p>
+
+        <div class="action-bar">
+          <div class="method-tabs">
+            <div class="method-tab active" onclick="selectMethod('iqr', this)">IQR Method</div>
+            <div class="method-tab" onclick="selectMethod('zscore', this)">Z-Score</div>
+            <div class="method-tab" onclick="selectMethod('isolation_forest', this)">Isolation Forest</div>
+          </div>
+          <button class="btn btn-accent2" onclick="detectOutliers()">🔍 Detect Outliers</button>
+          <button class="btn btn-danger btn-sm" id="remove-outliers-btn" onclick="removeOutliers()"
+            style="display:none">✕ Remove Outliers</button>
+        </div>
+
+        <div id="outlier-results" class="hidden">
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px">
+            <div class="stat-box">
+              <div class="val text-danger" id="out-count">—</div>
+              <div class="lbl">Outliers Found</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-accent" id="out-total">—</div>
+              <div class="lbl">Total Rows</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-warn" id="out-pct">—</div>
+              <div class="lbl">Outlier %</div>
+            </div>
+          </div>
+          <p class="text-sm text-muted mb-2">Rows highlighted in <span class="text-danger">red</span> are detected
+            outliers</p>
+          <div class="data-table-wrap" id="outlier-table"></div>
+        </div>
+
+        <div id="outlier-empty" class="empty-state">
+          <div class="icon">🔍</div>
+          <p>Load and clean data first, then detect outliers.</p>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║       NORMALIZE           ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-normalize">
+        <h1 class="section-title">Data Normalization <span class="info-icon" data-edu="normalize">?</span></h1>
+        <p class="section-sub">Scale numerical features for ML compatibility</p>
+
+        <div class="action-bar">
+          <div class="method-tabs">
+            <div class="method-tab active" onclick="selectNormMethod('minmax', this)">MinMax Scaler</div>
+            <div class="method-tab" onclick="selectNormMethod('standard', this)">Standard Scaler</div>
+          </div>
+          <button class="btn btn-accent" onclick="normalizeData()">⚖️ Normalize</button>
+          <button class="btn btn-outline btn-sm" onclick="downloadData('normalized')">⬇ Download Normalized</button>
+        </div>
+
+        <div id="norm-results" class="hidden">
+          <div class="diff-grid">
+            <div class="diff-panel">
+              <div class="panel-label">Original <span class="badge badge-warn">Unscaled</span></div>
+              <div class="data-table-wrap" id="before-norm-table"></div>
+            </div>
+            <div class="diff-panel">
+              <div class="panel-label">Normalized <span class="badge badge-success">Scaled</span></div>
+              <div class="data-table-wrap" id="after-norm-table"></div>
+            </div>
+          </div>
+        </div>
+
+        <div id="norm-empty" class="empty-state">
+          <div class="icon">⚖️</div>
+          <p>Load data first, then normalize.</p>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║         CHARTS            ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-charts">
+        <h1 class="section-title">Analytics Charts</h1>
+        <p class="section-sub">Deep-dive visualizations of your stock data</p>
+
+        <div class="charts-grid" style="margin-bottom:20px">
+          <div class="chart-card">
+            <div class="chart-title">Price OHLC View</div>
+            <div class="chart-sub">Open / High / Low / Close comparison</div>
+            <div class="chart-canvas-wrap" style="height:280px"><canvas id="chart-ohlc"></canvas></div>
+          </div>
+          <div class="chart-card">
+            <div class="chart-title">Volume</div>
+            <div class="chart-sub">Trading volume per day</div>
+            <div class="chart-canvas-wrap" style="height:280px"><canvas id="chart-vol2"></canvas></div>
+          </div>
+        </div>
+
+        <div class="chart-card" style="margin-bottom:20px">
+          <div class="chart-title">Moving Averages Overlay</div>
+          <div class="chart-sub">MA7 · MA20 · MA50 with closing price</div>
+          <div class="chart-canvas-wrap" style="height:300px"><canvas id="chart-ma2"></canvas></div>
+        </div>
+
+        <div id="charts-empty" class="empty-state">
+          <div class="icon">📉</div>
+          <p>Load stock data to see charts.</p>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║       AI PREDICTION       ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-predict">
+        <h1 class="section-title">AI Price Prediction</h1>
+        <p class="section-sub">Linear regression model trained on your loaded stock data</p>
+
+        <div class="action-bar">
+          <div class="method-tabs">
+            <div class="method-tab active predict-method" data-method="linear"
+              onclick="selectPredictMethod('linear', this)">Linear Regression</div>
+            <div class="method-tab predict-method" data-method="arima" onclick="selectPredictMethod('arima', this)">
+              ARIMA Forecast</div>
+          </div>
+          <div>
+            <label class="form-label" style="display:inline-block;margin-right:8px">Forecast Days</label>
+            <input class="form-control" type="number" id="forecast-days" value="30" min="5" max="365"
+              style="width:100px;display:inline-block" />
+          </div>
+          <button class="btn btn-accent2" onclick="runPrediction()">🤖 Run Prediction</button>
+        </div>
+
+        <div id="predict-results" class="hidden">
+          <div class="chart-card mb-3">
+            <div class="chart-title">Price Forecast</div>
+            <div class="prediction-legend">
+              <div class="legend-item">
+                <div class="legend-dot" style="background:var(--accent)"></div> Actual
+              </div>
+              <div class="legend-item">
+                <div class="legend-dot" style="background:var(--accent2)"></div> Predicted
+              </div>
+            </div>
+            <div class="chart-canvas-wrap" style="height:300px"><canvas id="chart-predict"></canvas></div>
+          </div>
+          <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+            <div class="stat-box">
+              <div class="val text-accent" id="pred-r2">—</div>
+              <div class="lbl">R² Score</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-warn" id="pred-mae">—</div>
+              <div class="lbl">MAE</div>
+            </div>
+            <div class="stat-box">
+              <div class="val text-success" id="pred-next">—</div>
+              <div class="lbl">Next Day Prediction</div>
+            </div>
+          </div>
+        </div>
+
+        <div id="predict-empty" class="empty-state">
+          <div class="icon">🤖</div>
+          <p>Load stock data to run AI prediction.</p>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║    MULTI-STOCK COMPARE    ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-compare">
+        <h1 class="section-title">Multi-Stock Comparison</h1>
+        <p class="section-sub">Compare closing prices of multiple tickers side by side</p>
+
+        <div class="card mb-3">
+          <div class="card-title">Select Stocks</div>
+          <div class="compare-inputs">
+            <input class="form-control" id="cmp-s1" placeholder="AAPL" value="AAPL" />
+            <input class="form-control" id="cmp-s2" placeholder="TSLA" value="TSLA" />
+            <input class="form-control" id="cmp-s3" placeholder="MSFT" value="MSFT" />
+            <select class="form-control" id="cmp-period" style="min-width:120px">
+              <option value="1mo">1 Month</option>
+              <option value="3mo" selected>3 Months</option>
+              <option value="6mo">6 Months</option>
+              <option value="1y">1 Year</option>
+            </select>
+            <button class="btn btn-accent" onclick="compareStocks()">🔄 Compare</button>
+          </div>
+        </div>
+
+        <div id="compare-chart-wrap" class="chart-card hidden">
+          <div class="chart-title">Closing Price Comparison</div>
+          <div class="chart-canvas-wrap" style="height:320px"><canvas id="chart-compare"></canvas></div>
+        </div>
+      </div>
+
+      <!-- ╔═══════════════════════════╗ -->
+      <!-- ║         HISTORY           ║ -->
+      <!-- ╚═══════════════════════════╝ -->
+      <div class="page" id="page-history">
+        <h1 class="section-title">Analysis History</h1>
+        <p class="section-sub">All past data loading sessions saved for your account</p>
+        <div id="history-table-wrap">
+          <div class="empty-state">
+            <div class="icon">🕒</div>
+            <p>Loading history...</p>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /content -->
+  </div><!-- /main -->
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toasts"></div>
+
+  <!-- LOADING OVERLAY -->
+  <div class="loading-overlay hidden" id="loading-overlay">
+    <div class="big-spinner"></div>
+    <p id="loading-msg">Processing...</p>
+  </div>
+
+  <script src="script.js"></script>
+
+  <!-- HELP MODAL -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="closeHelpModal()">✕</button>
+      <h2 class="font-syne mb-3">StockForge Learning Center</h2>
+      <div id="help-content-list" style="max-height: 400px; overflow-y: auto;">
+        <!-- Content will be injected by script.js -->
+      </div>
+    </div>
+  </div>
+
+  <div id="edu-tooltip" class="edu-tooltip"></div>
+</body>
+
+</html>
