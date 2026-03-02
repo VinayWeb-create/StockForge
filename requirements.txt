@@ -2,8 +2,8 @@ flask==3.0.3
 flask-cors==4.0.1
 pymongo==4.7.3
 werkzeug==3.0.3
-pandas==2.2.2
-numpy==1.26.4
+pandas>=2.3.0
+numpy>=2.0.0
 scikit-learn==1.5.0
 scipy==1.13.1
 yfinance==0.2.40
