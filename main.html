@@ -354,7 +354,7 @@
   </div>
 
   <script>
-    const API = 'http://localhost:5000';
+    const API = window.location.origin;
 
     function switchTab(tab) {
       document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', (i === 0 && tab === 'login') || (i === 1 && tab === 'signup')));
