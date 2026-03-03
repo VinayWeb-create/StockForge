@@ -5,7 +5,10 @@
 
 // ── Config ──────────────────────────────────────────────────────────────────
 // Use current origin for API calls to avoid hardcoded localhost in production
-const API = window.location.origin;
+const API =
+  window.location.hostname.includes("vercel.app")
+    ? "https://stockforge-7qnm.onrender.com"
+    : window.location.origin;
 
 // ── State ────────────────────────────────────────────────────────────────────
 let state = {
