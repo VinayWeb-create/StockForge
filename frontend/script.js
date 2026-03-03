@@ -53,7 +53,7 @@ let socket = null;
 document.addEventListener('DOMContentLoaded', () => {
   // Guard: redirect to login if no user session
   const user = JSON.parse(localStorage.getItem('sf_user') || 'null');
-  if (!user) { window.location.href = 'main.html'; return; }
+  if (!user) { window.location.href = 'index.html'; return; }
 
   // Populate user chip
   document.getElementById('user-name').textContent = user.name || user.email;
