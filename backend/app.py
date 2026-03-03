@@ -52,12 +52,18 @@ app.config.update(
 
 # Standardize CORS to handle multi-origin requests correctly.
 # In production, recommend setting ALLOWED_ORIGINS env var.
-allowed_origins = os.environ.get('ALLOWED_ORIGINS', 'http://localhost:3000,http://127.0.0.1:3000,http://localhost:5000,http://127.0.0.1:5000,http://localhost:5500,http://127.0.0.1:5500').split(',')
-CORS(app,
-     origins=allowed_origins,
-     supports_credentials=True,
-     allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
-     methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"])
+allowed_origins = os.environ.get(
+    'ALLOWED_ORIGINS',
+    'http://localhost:3000'
+).split(',')
+
+CORS(
+    app,
+    origins=allowed_origins,
+    supports_credentials=True,
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
+    methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"]
+)
 
 # ── Redis Check for Components ────────────────────────────────────────────────
 redis_available = False
@@ -97,8 +103,7 @@ try:
         app_config.DATABASE_NAME
     )
 except Exception as e:
-    print(f"CRITICAL: Failed to connect to MongoDB. Application may not function correctly. Error: {e}")
-    db, client = None, None
+    raise RuntimeError(f"MongoDB connection failed: {e}")
 
 # Collections (initialized if db is available)
 if db is not None:
