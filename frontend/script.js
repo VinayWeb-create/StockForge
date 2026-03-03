@@ -216,7 +216,7 @@ function updateThemeIcon() {
 function logout() {
   localStorage.removeItem('sf_user');
   fetch(`${API}/logout`, { method: 'POST', credentials: 'include' }).finally(() => {
-    window.location.href = 'main.html';
+    window.location.href = 'index.html';
   });
 }
 
