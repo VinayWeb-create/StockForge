@@ -25,13 +25,11 @@ from pymongo import MongoClient, ASCENDING, DESCENDING
 from bson import ObjectId
 from werkzeug.security import generate_password_hash, check_password_hash
 
-import ml_utils
-
-import config
-import db_utils
-
-import logger_config
-import cache_utils
+from backend import ml_utils
+from backend import config
+from backend import db_utils
+from backend import logger_config
+from backend import cache_utils
 
 # ── Logging Setup ─────────────────────────────────────────────────────────────
 logger = logger_config.setup_logging()
