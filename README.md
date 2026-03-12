@@ -21,7 +21,6 @@ project-root/
 │
 └── README.md
 ```
-
 ---
 
 ## ✨ Features
